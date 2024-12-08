@@ -1,4 +1,4 @@
-import {Bot} from "grammy";
+import {Bot, InlineKeyboard} from "grammy";
 import * as dotenv from "dotenv";
 import {readFile} from "node:fs/promises";
 
@@ -17,6 +17,17 @@ const bot = new Bot(process.env.TOKEN!);
 
 const getRandomWord = () => easyWords[Math.floor(Math.random() * easyWords.length)];
 
-bot.on("message", (ctx) => ctx.reply(getRandomWord()));
+bot.command('start', (ctx) => {
+    const inlineKeyboard = new InlineKeyboard()
+        .text('Простое слово', 'easy_word')
+
+    ctx.reply('Добро пожаловать, сымпровизируй-ка это:', {
+        reply_markup: inlineKeyboard,
+    });
+});
+
+bot.callbackQuery('easy_word', (ctx) => {
+    ctx.answerCallbackQuery(getRandomWord());
+});
 
 bot.start();
