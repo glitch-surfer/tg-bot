@@ -62,7 +62,7 @@ try {
     process.exit(1);
 }
 
-const bot = new Bot('7620292223:AAHZ9vvoVvs9BI4ugWpxy9LGbE7GpNNZ7mA');
+const bot = new Bot(process.env.TOKEN!);
 
 const getRandomWord = () => easyWords[Math.floor(Math.random() * easyWords.length)];
 
