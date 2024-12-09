@@ -13,6 +13,7 @@ const RANDOM_WORD_BTN_TEXT = '🎲Случайное слово';
 
 const __dirname = path.dirname(new URL(import.meta.url).pathname);
 const dbPath = path.join(__dirname, 'user_db.json');
+
 let inMemoryDB: Record<string, { requestsCount: number, userData: unknown }> = {};
 let isThereSomethingToSave = false;
 
@@ -31,6 +32,7 @@ function saveDB() {
 
     try {
         writeFileSync(dbPath, JSON.stringify(inMemoryDB, null, 2));
+        isThereSomethingToSave = false;
     } catch (error) {
         console.error('Failed to save database:', error);
     }
@@ -50,23 +52,31 @@ async function updateUserAndRespond(ctx: Context, userId?: string) {
     const user = inMemoryDB[userId ?? ''];
     const isAdvancedUser = user?.requestsCount >= USER_REQUESTS_BEFORE_ADVANCED;
     const btnText = ctx.message?.text ?? '';
-    const reply = btnText === EASY_WORD_BTN_TEXT ? getRandomWord() : getRandomWord()//hard word here;
+    const isRandomBtn = btnText === RANDOM_WORD_BTN_TEXT;
+    let reply: string;
+
+    if (isRandomBtn) reply = Math.random() > 0.5 ? getRandomEasyWord() : getRandomHardWord();
+    else reply = btnText === EASY_WORD_BTN_TEXT ? getRandomEasyWord() : getRandomHardWord()
 
     if (!isAdvancedUser) return ctx.reply(reply);
 
     const keyboard = new Keyboard()
         .text(EASY_WORD_BTN_TEXT)
-        .text(ADVANCED_WORD_BTN_TEXT);
+        .text(ADVANCED_WORD_BTN_TEXT)
+        .row()
+        .text(RANDOM_WORD_BTN_TEXT);
 
     await ctx.reply(reply, {reply_markup: keyboard});
 }
 
 let easyWords: string[];
-const getRandomWord = () => easyWords[Math.floor(Math.random() * easyWords.length)];
+let hardWords: string[];
+const getRandomEasyWord = () => easyWords[Math.floor(Math.random() * easyWords.length)];
+const getRandomHardWord = () => hardWords[Math.floor(Math.random() * hardWords.length)];
 
 try {
-    const content = readFileSync("./src/easy-words.txt", "utf-8")
-    easyWords = content.split("\n")
+    easyWords = readFileSync("./src/easy-words.txt", "utf-8").split("\n")
+    hardWords = readFileSync("./src/hard-words.txt", "utf-8").split("\n")
 } catch (error) {
     console.error(error);
     process.exit(1);
