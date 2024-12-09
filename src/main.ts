@@ -8,11 +8,13 @@ dotenv.config();
 
 const USER_REQUESTS_BEFORE_ADVANCED = 15;
 const EASY_WORD_BTN_TEXT = '👌Простое слово';
-const ADVANCED_WORD_BTN_TEXT = '👌Сложное слово';
+const ADVANCED_WORD_BTN_TEXT = '🔥Сложное слово';
+const RANDOM_WORD_BTN_TEXT = '🎲Случайное слово';
 
 const __dirname = path.dirname(new URL(import.meta.url).pathname);
 const dbPath = path.join(__dirname, 'user_db.json');
 let inMemoryDB: Record<string, { requestsCount: number, userData: unknown }> = {};
+let isThereSomethingToSave = false;
 
 function loadDB() {
     try {
@@ -25,6 +27,8 @@ function loadDB() {
 }
 
 function saveDB() {
+    if (!isThereSomethingToSave) return;
+
     try {
         writeFileSync(dbPath, JSON.stringify(inMemoryDB, null, 2));
     } catch (error) {
@@ -39,8 +43,8 @@ if (!existsSync(dbPath)) {
 // Initial load of the database into memory
 loadDB();
 
-// Set an interval for batch saving to disk every 10 minutes
-setInterval(saveDB, 1000 * 60 * 10);
+// Set an interval for batch saving to disk every 1 hour
+setInterval(saveDB, 1000 * 60 * 60);
 
 async function updateUserAndRespond(ctx: Context, userId?: string) {
     const user = inMemoryDB[userId ?? ''];
@@ -74,6 +78,7 @@ bot.command('start', async (ctx: Context) => {
     const userId = ctx.from?.id.toString() ?? '';
 
     if (!inMemoryDB[userId]) {
+        isThereSomethingToSave = true;
         inMemoryDB[userId] = {requestsCount: 0, userData: ctx.from};
     }
 
@@ -83,6 +88,7 @@ bot.command('start', async (ctx: Context) => {
 });
 
 bot.on('message:text', async (ctx) => {
+    isThereSomethingToSave = true;
     const userId = ctx.from?.id.toString() ?? "";
 
     if (inMemoryDB[userId]) {
