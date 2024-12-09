@@ -1,4 +1,4 @@
-import {Bot, Context, InlineKeyboard} from "grammy";
+import {Bot, Context, Keyboard} from "grammy";
 import * as dotenv from "dotenv";
 import path from "node:path";
 import {readFileSync} from "fs";
@@ -6,9 +6,13 @@ import {existsSync, writeFileSync} from "node:fs";
 
 dotenv.config();
 
+const USER_REQUESTS_BEFORE_ADVANCED = 15;
+const EASY_WORD_BTN_TEXT = '👌Простое слово';
+const ADVANCED_WORD_BTN_TEXT = '👌Сложное слово';
+
 const __dirname = path.dirname(new URL(import.meta.url).pathname);
 const dbPath = path.join(__dirname, 'user_db.json');
-let inMemoryDB: Record<string, { count: number }> = {};
+let inMemoryDB: Record<string, { requestsCount: number, userData: unknown }> = {};
 
 function loadDB() {
     try {
@@ -40,20 +44,22 @@ setInterval(saveDB, 1000 * 60 * 10);
 
 async function updateUserAndRespond(ctx: Context, userId?: string) {
     const user = inMemoryDB[userId ?? ''];
+    const isAdvancedUser = user?.requestsCount >= USER_REQUESTS_BEFORE_ADVANCED;
+    const btnText = ctx.message?.text ?? '';
+    const reply = btnText === EASY_WORD_BTN_TEXT ? getRandomWord() : getRandomWord()//hard word here;
 
-    let inlineKeyboard = new InlineKeyboard();
+    if (!isAdvancedUser) return ctx.reply(reply);
 
-    if (user?.count < 15) {
-        inlineKeyboard.text('👌Простое слово', 'easyWord');
-    } else {
-        inlineKeyboard.text('👌Простое слово', 'easyWord');
-        inlineKeyboard.text('🔥Сложное слово', 'hardWord');
-    }
+    const keyboard = new Keyboard()
+        .text(EASY_WORD_BTN_TEXT)
+        .text(ADVANCED_WORD_BTN_TEXT);
 
-    await ctx.reply(getRandomWord(), {reply_markup: inlineKeyboard});
+    await ctx.reply(reply, {reply_markup: keyboard});
 }
 
 let easyWords: string[];
+const getRandomWord = () => easyWords[Math.floor(Math.random() * easyWords.length)];
+
 try {
     const content = readFileSync("./src/easy-words.txt", "utf-8")
     easyWords = content.split("\n")
@@ -64,35 +70,27 @@ try {
 
 const bot = new Bot(process.env.TOKEN!);
 
-const getRandomWord = () => easyWords[Math.floor(Math.random() * easyWords.length)];
-
 bot.command('start', async (ctx: Context) => {
     const userId = ctx.from?.id.toString() ?? '';
 
     if (!inMemoryDB[userId]) {
-        inMemoryDB[userId] = {count: 0};
+        inMemoryDB[userId] = {requestsCount: 0, userData: ctx.from};
     }
 
-    const inlineKeyboard = new InlineKeyboard().text('👌Простое слово', 'easyWord');
+    const keyboard = new Keyboard().text(EASY_WORD_BTN_TEXT);
 
-    await ctx.reply('Сымпровизируй-ка это:', {reply_markup: inlineKeyboard});
+    await ctx.reply('Сымпровизируй-ка это:', {reply_markup: keyboard});
 });
 
-bot.callbackQuery('easyWord', async (ctx) => {
-    await ctx.answerCallbackQuery();
+bot.on('message:text', async (ctx) => {
     const userId = ctx.from?.id.toString() ?? "";
 
     if (inMemoryDB[userId]) {
-        inMemoryDB[userId].count += 1;
+        inMemoryDB[userId].requestsCount += 1;
         await updateUserAndRespond(ctx, userId);
     } else {
         await ctx.reply('Something went wrong.');
     }
-});
-
-bot.callbackQuery('hardWord', async (ctx) => {
-    await ctx.answerCallbackQuery();
-    await updateUserAndRespond(ctx);
 });
 
 bot.start();
