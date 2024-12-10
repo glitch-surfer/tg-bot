@@ -94,7 +94,7 @@ bot.command('start', async (ctx: Context) => {
 
     const keyboard = new Keyboard().text(EASY_WORD_BTN_TEXT);
 
-    await ctx.reply('Сымпровизируй-ка это:', {reply_markup: keyboard});
+    await ctx.reply('Нажми, чтобы получить случайное слово⬇️', {reply_markup: keyboard});
 });
 
 bot.on('message:text', async (ctx) => {
