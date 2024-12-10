@@ -111,14 +111,14 @@ bot.on('message:text', async (ctx) => {
 
 bot.start();
 
-process.on('SIGINT', async () => {
+process.on('SIGINT', () => {
     console.log('Saving DB before shutdown...');
-    await saveDB();
+    saveDB();
     process.exit();
 });
 
-process.on('SIGTERM', async () => {
+process.on('SIGTERM', () => {
     console.log('Saving DB before shutdown...');
-    await saveDB();
+    saveDB();
     process.exit();
 });
