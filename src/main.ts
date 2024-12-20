@@ -1,10 +1,17 @@
 import {Bot, Context, Keyboard} from "grammy";
 import * as dotenv from "dotenv";
 import path from "node:path";
-import {readFileSync} from "fs";
-import {existsSync, writeFileSync} from "node:fs";
+import {readFile, writeFile} from "node:fs/promises";
+import {readFileSync, existsSync, writeFileSync} from "node:fs";
 
 dotenv.config();
+
+interface DB {
+    [userId: string]: {
+        requestsCount: number;
+        userData: unknown;
+    }
+}
 
 const USER_REQUESTS_BEFORE_ADVANCED = 15;
 const EASY_WORD_BTN_TEXT = '👌Простое слово';
@@ -14,42 +21,28 @@ const RANDOM_WORD_BTN_TEXT = '🎲Случайное слово';
 const __dirname = path.dirname(new URL(import.meta.url).pathname);
 const dbPath = path.join(__dirname, 'user_db.json');
 
-let inMemoryDB: Record<string, { requestsCount: number, userData: unknown }> = {};
-let isThereSomethingToSave = false;
+if (!existsSync(dbPath)) writeFileSync(dbPath, JSON.stringify({}), 'utf-8');
 
-function loadDB() {
+const getDB = async (): Promise<DB> => {
     try {
-        const data = readFileSync(dbPath, 'utf-8');
-        inMemoryDB = JSON.parse(data);
+        const data = await readFile(dbPath, 'utf-8');
+        return JSON.parse(data);
     } catch (error) {
         console.error('Failed to load database:', error);
-        inMemoryDB = {};
+        return {};
     }
 }
 
-function saveDB() {
-    if (!isThereSomethingToSave) return;
-
+const setDB = async (db: DB) => {
     try {
-        writeFileSync(dbPath, JSON.stringify(inMemoryDB, null, 2));
-        isThereSomethingToSave = false;
+        await writeFile(dbPath, JSON.stringify(db, null, 2));
     } catch (error) {
         console.error('Failed to save database:', error);
     }
 }
 
-if (!existsSync(dbPath)) {
-    saveDB();
-}
-
-// Initial load of the database into memory
-loadDB();
-
-// Set an interval for batch saving to disk every 1 hour
-setInterval(saveDB, 1000 * 60 * 60);
-
-async function updateUserAndRespond(ctx: Context, userId?: string) {
-    const user = inMemoryDB[userId ?? ''];
+async function updateUserAndRespond(ctx: Context, userId: string, db: DB) {
+    const user = db[userId ?? ''];
     const isAdvancedUser = user?.requestsCount >= USER_REQUESTS_BEFORE_ADVANCED;
     const btnText = ctx.message?.text ?? '';
     const isRandomBtn = btnText === RANDOM_WORD_BTN_TEXT;
@@ -86,10 +79,11 @@ const bot = new Bot(process.env.TOKEN!);
 
 bot.command('start', async (ctx: Context) => {
     const userId = ctx.from?.id.toString() ?? '';
+    const db = await getDB();
 
-    if (!inMemoryDB[userId]) {
-        isThereSomethingToSave = true;
-        inMemoryDB[userId] = {requestsCount: 0, userData: ctx.from};
+    if (!db[userId]) {
+        db[userId] = {requestsCount: 0, userData: ctx.from};
+        await setDB(db);
     }
 
     const keyboard = new Keyboard().text(EASY_WORD_BTN_TEXT);
@@ -98,27 +92,16 @@ bot.command('start', async (ctx: Context) => {
 });
 
 bot.on('message:text', async (ctx) => {
-    isThereSomethingToSave = true;
-    const userId = ctx.from?.id.toString() ?? "";
+        const userId = ctx.from?.id.toString() ?? "";
+        const db = await getDB();
 
-    if (inMemoryDB[userId]) {
-        inMemoryDB[userId].requestsCount += 1;
-        await updateUserAndRespond(ctx, userId);
-    } else {
-        await ctx.reply('Something went wrong.');
+        if (db[userId]) db[userId].requestsCount += 1;
+        else db[userId] = {requestsCount: 1, userData: ctx.from};
+        
+        await updateUserAndRespond(ctx, userId, db);
+        await setDB(db);
     }
-});
+)
+;
 
 bot.start();
-
-process.on('SIGINT', () => {
-    console.log('Saving DB before shutdown...');
-    saveDB();
-    process.exit();
-});
-
-process.on('SIGTERM', () => {
-    console.log('Saving DB before shutdown...');
-    saveDB();
-    process.exit();
-});
