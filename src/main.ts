@@ -3,7 +3,8 @@ import * as dotenv from "dotenv";
 import path from "node:path";
 import {readFile, writeFile} from "node:fs/promises";
 import {readFileSync, existsSync, writeFileSync} from "node:fs";
-import {AsyncQueueHandler} from "./async-queue-handler.js";
+import {asyncQueueHandler} from "./async-queue-handler.js";
+import {logger} from "./logger.js";
 
 dotenv.config();
 
@@ -24,14 +25,12 @@ const dbPath = path.join(__dirname, 'user_db.json');
 
 if (!existsSync(dbPath)) writeFileSync(dbPath, JSON.stringify({}), 'utf-8');
 
-const asyncQueueHandler = new AsyncQueueHandler();
-
 const getDB = async (): Promise<DB> => {
     try {
         const data = await readFile(dbPath, 'utf-8');
         return JSON.parse(data);
-    } catch (error) {
-        console.error('Failed to load database:', error);
+    } catch (err) {
+        logger.logError(err as Error);
         return {};
     }
 }
@@ -39,8 +38,8 @@ const getDB = async (): Promise<DB> => {
 const setDB = async (db: DB) => {
     try {
         await writeFile(dbPath, JSON.stringify(db, null, 2));
-    } catch (error) {
-        console.error('Failed to save database:', error);
+    } catch (err) {
+        logger.logError(err as Error);
     }
 }
 
@@ -73,8 +72,8 @@ const getRandomHardWord = () => hardWords[Math.floor(Math.random() * hardWords.l
 try {
     easyWords = readFileSync("./src/easy-words.txt", "utf-8").split("\n")
     hardWords = readFileSync("./src/hard-words.txt", "utf-8").split("\n")
-} catch (error) {
-    console.error(error);
+} catch (err) {
+    logger.logError(err as Error);
     process.exit(1);
 }
 
@@ -104,12 +103,14 @@ bot.on('message:text', async (ctx) => {
 
             await updateUserAndRespond(ctx, userId, db);
             await setDB(db);
+            logger.logError(new Error(`User ${userId} sent message: ${ctx.message?.text}`));
         })
     }
 );
 
 bot.catch((err) => {
-    console.error('Global error handler caught an error:', err);
+    logger.logError(err);
 });
 
-bot.start();
+bot.start()
+logger.logAppRestart()

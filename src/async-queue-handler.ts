@@ -1,6 +1,6 @@
 type RequestFn = () => Promise<void>;
 
-export class AsyncQueueHandler {
+class AsyncQueueHandler {
     private queue: RequestFn[] = [];
     private processing: boolean = false;
     private resolveEmpty: (() => void)[] = [];
@@ -74,3 +74,5 @@ export class AsyncQueueHandler {
         }
     }
 }
+
+export const asyncQueueHandler = new AsyncQueueHandler()
