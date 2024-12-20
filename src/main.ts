@@ -3,6 +3,7 @@ import * as dotenv from "dotenv";
 import path from "node:path";
 import {readFile, writeFile} from "node:fs/promises";
 import {readFileSync, existsSync, writeFileSync} from "node:fs";
+import {AsyncQueueHandler} from "./async-queue-handler.js";
 
 dotenv.config();
 
@@ -22,6 +23,8 @@ const __dirname = path.dirname(new URL(import.meta.url).pathname);
 const dbPath = path.join(__dirname, 'user_db.json');
 
 if (!existsSync(dbPath)) writeFileSync(dbPath, JSON.stringify({}), 'utf-8');
+
+const asyncQueueHandler = new AsyncQueueHandler();
 
 const getDB = async (): Promise<DB> => {
     try {
@@ -92,16 +95,21 @@ bot.command('start', async (ctx: Context) => {
 });
 
 bot.on('message:text', async (ctx) => {
-        const userId = ctx.from?.id.toString() ?? "";
-        const db = await getDB();
+        asyncQueueHandler.enqueue(async () => {
+            const userId = ctx.from?.id.toString() ?? "";
+            const db = await getDB();
 
-        if (db[userId]) db[userId].requestsCount += 1;
-        else db[userId] = {requestsCount: 1, userData: ctx.from};
-        
-        await updateUserAndRespond(ctx, userId, db);
-        await setDB(db);
+            if (db[userId]) db[userId].requestsCount += 1;
+            else db[userId] = {requestsCount: 1, userData: ctx.from};
+
+            await updateUserAndRespond(ctx, userId, db);
+            await setDB(db);
+        })
     }
-)
-;
+);
+
+bot.catch((err) => {
+    console.error('Global error handler caught an error:', err);
+});
 
 bot.start();
