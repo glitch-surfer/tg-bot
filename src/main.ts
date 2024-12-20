@@ -103,7 +103,6 @@ bot.on('message:text', async (ctx) => {
 
             await updateUserAndRespond(ctx, userId, db);
             await setDB(db);
-            logger.logError(new Error(`User ${userId} sent message: ${ctx.message?.text}`));
         })
     }
 );

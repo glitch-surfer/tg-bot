@@ -7,7 +7,7 @@ class Logger {
 
     constructor(logFileName: string = 'app.log') {
         const __dirname = path.dirname(fileURLToPath(import.meta.url));
-        this.logFilePath = path.join(__dirname, logFileName);
+        this.logFilePath = path.join(__dirname, '..', logFileName);
     }
 
     /**
