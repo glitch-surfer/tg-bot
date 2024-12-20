@@ -2,9 +2,9 @@ import {Bot, Context, Keyboard} from "grammy";
 import * as dotenv from "dotenv";
 import path from "node:path";
 import {readFile, writeFile} from "node:fs/promises";
-import {readFileSync, existsSync, writeFileSync} from "node:fs";
-import {asyncQueueHandler} from "./async-queue-handler.js";
-import {logger} from "./logger.js";
+import {existsSync, readFileSync, writeFileSync} from "node:fs";
+import {asyncQueueHandler} from "./helpers/async-queue-handler.js";
+import {logger} from "./helpers/logger.js";
 
 dotenv.config();
 
