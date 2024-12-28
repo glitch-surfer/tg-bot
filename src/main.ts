@@ -94,16 +94,21 @@ bot.command('start', async (ctx: Context) => {
 });
 
 bot.on('message:text', async (ctx) => {
-        asyncQueueHandler.enqueue(async () => {
-            const userId = ctx.from?.id.toString() ?? "";
-            const db = await getDB();
+        const isBtnClicked = ctx.message?.text === EASY_WORD_BTN_TEXT
+            || ctx.message?.text === ADVANCED_WORD_BTN_TEXT
+            || ctx.message?.text === RANDOM_WORD_BTN_TEXT;
+        if (!isBtnClicked) return;
 
-            if (db[userId]) db[userId].requestsCount += 1;
-            else db[userId] = {requestsCount: 1, userData: ctx.from};
+            asyncQueueHandler.enqueue(async () => {
+                const userId = ctx.from?.id.toString() ?? "";
+                const db = await getDB();
 
-            await updateUserAndRespond(ctx, userId, db);
-            await setDB(db);
-        })
+                if (db[userId]) db[userId].requestsCount += 1;
+                else db[userId] = {requestsCount: 1, userData: ctx.from};
+
+                await updateUserAndRespond(ctx, userId, db);
+                await setDB(db);
+            })
     }
 );
 
