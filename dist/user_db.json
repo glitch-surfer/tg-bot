@@ -1,0 +1,91 @@
+{
+  "30965144": {
+    "requestsCount": 1,
+    "userData": {
+      "id": 30965144,
+      "is_bot": false,
+      "first_name": "Dmitry",
+      "last_name": "P.",
+      "username": "dpimushkin",
+      "language_code": "ru",
+      "is_premium": true
+    }
+  },
+  "87708161": {
+    "requestsCount": 141,
+    "userData": {
+      "id": 87708161,
+      "is_bot": false,
+      "first_name": "Aleksei",
+      "last_name": "Dvoeglazov",
+      "username": "kinoglazov",
+      "language_code": "ru",
+      "is_premium": true
+    }
+  },
+  "153916227": {
+    "requestsCount": 182,
+    "userData": {
+      "id": 153916227,
+      "is_bot": false,
+      "first_name": "Владислав",
+      "username": "VladislavGa",
+      "language_code": "en",
+      "is_premium": true
+    }
+  },
+  "421285956": {
+    "requestsCount": 1,
+    "userData": {
+      "id": 421285956,
+      "is_bot": false,
+      "first_name": "Palina",
+      "last_name": "Welker",
+      "username": "appolinera",
+      "language_code": "de"
+    }
+  },
+  "438728254": {
+    "requestsCount": 20,
+    "userData": {
+      "id": 438728254,
+      "is_bot": false,
+      "first_name": "Sasha Стилист",
+      "last_name": "Demidova",
+      "username": "sashanchas",
+      "language_code": "ru"
+    }
+  },
+  "622352540": {
+    "requestsCount": 14,
+    "userData": {
+      "id": 622352540,
+      "is_bot": false,
+      "first_name": "Катерина",
+      "language_code": "ru",
+      "is_premium": true
+    }
+  },
+  "733717338": {
+    "requestsCount": 10,
+    "userData": {
+      "id": 733717338,
+      "is_bot": false,
+      "first_name": "Albert",
+      "last_name": "Kasparov",
+      "username": "Al_kasparoff",
+      "language_code": "ru",
+      "is_premium": true
+    }
+  },
+  "2085123681": {
+    "requestsCount": 6,
+    "userData": {
+      "id": 2085123681,
+      "is_bot": false,
+      "first_name": "Dababy",
+      "last_name": "Mathers",
+      "language_code": "kk"
+    }
+  }
+}
